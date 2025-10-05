@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JanDhanTracker - Pincode Projects</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #f0f7ff, #e3ecff);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: linear-gradient(90deg, #0055cc, #0099ff);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      border-bottom-left-radius: 15px;
+      border-bottom-right-radius: 15px;
+    }
+    .screen { display: none; padding: 16px; flex: 1; }
+    .active { display: block; }
+    h2 { margin-top: 0; }
+    .card {
+      background: white;
+      margin: 10px 0;
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: scale(1.02); }
+    .card h3 { margin: 0 0 6px; color: #0044aa; }
+    .card p { margin: 4px 0; font-size: 14px; }
+    .btn {
+      display: inline-block;
+      padding: 6px 10px;
+      font-size: 13px;
+      background: #0055cc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .btn:hover { background: #003f99; }
+    #pincodeInput, #searchBar {
+      width: 95%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    /* Navbar */
+    .nav {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      display: flex;
+      background: white;
+      border-top: 1px solid #ddd;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+    }
+    .nav button {
+      flex: 1;
+      padding: 10px;
+      background: none;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      color: #666;
+    }
+    .nav button.active {
+      color: #0055cc;
+      font-weight: bold;
+      border-top: 3px solid #0055cc;
+    }
+    .nav button span { display: block; font-size: 18px; }
+    /* Overlay form */
+    #updateForm {
+      display: none;
+      background: white;
+      position: fixed;
+      top: 20%; left: 10%; right: 10%;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    #updateForm textarea {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    #updateForm input[type="range"] {
+      width: 100%;
+    }
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+
+<header>JanDhanTracker</header>
+
+<!-- Home -->
+<div id="home" class="screen active">
+  <h2>Find Projects by Pincode</h2>
+  <input type="number" id="pincodeInput" placeholder="Enter Pincode (e.g., 800001)">
+  <button class="btn" onclick="loadProjects()">Search</button>
+  <input type="text" id="searchBar" placeholder="🔍 Search projects..." onkeyup="filterProjects()">
+  <div id="projectsList"></div>
+</div>
+
+<!-- Notifications -->
+<div id="notifications" class="screen">
+  <h2>Notifications</h2>
+  <div class="card"><p>🌉 New Bridge Project approved in Gaya (₹12 Cr)</p></div>
+  <div class="card"><p>🚧 Patna Road Project updated to 60% completion</p></div>
+</div>
+
+<!-- Profile -->
+<div id="profile" class="screen">
+  <h2>User Profile</h2>
+  <div class="card">
+    <p><b>Name:</b> Aryan Kumar</p>
+    <p><b>District:</b> Patna</p>
+    <p><b>Following:</b> 3 Projects</p>
+  </div>
+</div>
+
+<!-- Update Progress Form -->
+<div id="overlay"></div>
+<div id="updateForm">
+  <h3>Update Project Progress</h3>
+  <p id="formProjectName"></p>
+  <label>Completion: <span id="progressValue">50%</span></label>
+  <input type="range" min="0" max="100" value="50" 
+    oninput="document.getElementById('progressValue').innerText=this.value+'%'">
+  <textarea placeholder="Add remarks..."></textarea>
+  <br>
+  <button class="btn" onclick="submitUpdate()">Submit</button>
+  <button class="btn" style="background:#888;" onclick="closeForm()">Cancel</button>
+</div>
+
+<!-- Navbar -->
+<div class="nav">
+  <button onclick="showScreen('home')" class="active"><span>🏠</span>Home</button>
+  <button onclick="showScreen('notifications')"><span>🔔</span>Alerts</button>
+  <button onclick="showScreen('profile')"><span>👤</span>Profile</button>
+</div>
+
+<script>
+const projectsData = {
+  "800001": [
+    {name: "🚧 Road Widening near Gandhi Maidan", budget: "₹5 Cr", status: "Ongoing", org: "L&T Constructions", people: "150"},
+    {name: "🌉 Bridge Repair over Ganga", budget: "₹20 Cr", status: "Approved", org: "Gammon India", people: "220"},
+    {name: "💡 Solar Street Lighting", budget: "₹1 Cr", status: "Ongoing", org: "Tata Power Solar", people: "40"}
+  ],
+  "823001": [
+    {name: "🌊 Riverfront Beautification (Gaya)", budget: "₹8 Cr", status: "Ongoing", org: "Shapoorji Pallonji", people: "100"},
+    {name: "🏫 Smart Classroom Building", budget: "₹2 Cr", status: "Approved", org: "EduTech Infra Pvt Ltd", people: "35"}
+  ],
+  "842001": [
+    {name: "🚧 Drainage System Upgrade", budget: "₹3 Cr", status: "Ongoing", org: "NBCC India", people: "60"},
+    {name: "🏥 District Hospital Expansion", budget: "₹10 Cr", status: "Approved", org: "Apollo Infra", people: "120"}
+  ]
+};
+
+function loadProjects() {
+  let pin = document.getElementById("pincodeInput").value;
+  let list = document.getElementById("projectsList");
+  list.innerHTML = "";
+  if (!projectsData[pin]) {
+    list.innerHTML = `<p>No projects found for this pincode.</p>`;
+    return;
+  }
+  projectsData[pin].forEach(p => {
+    let card = document.createElement("div");
+    card.className = "card project";
+    card.innerHTML = `
+      <h3>${p.name}</h3>
+      <p><b>Budget:</b> ${p.budget}</p>
+      <p><b>Status:</b> ${p.status}</p>
+      <p><b>Organisation:</b> ${p.org}</p>
+      <p><b>People Engaged:</b> ${p.people}</p>
+      <button class="btn" onclick="openForm('${p.name}')">Update Progress</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function filterProjects() {
+  let input = document.getElementById("searchBar").value.toLowerCase();
+  document.querySelectorAll(".project").forEach(p => {
+    let text = p.innerText.toLowerCase();
+    p.style.display = text.includes(input) ? "block" : "none";
+  });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.nav button[onclick="showScreen('${id}')"]`).classList.add('active');
+}
+
+function openForm(projectName) {
+  document.getElementById("formProjectName").innerText = projectName;
+  document.getElementById("overlay").style.display = "block";
+  document.getElementById("updateForm").style.display = "block";
+}
+function closeForm() {
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("updateForm").style.display = "none";
+}
+function submitUpdate() {
+  alert("✅ Progress updated successfully!");
+  closeForm();
+}
+</script>
+
+</body>
+</html>
